@@ -8,6 +8,9 @@ on:
   # Allow manually triggering the workflow.
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   phpunit:
     name: PHPUnit on PHP ${{ matrix.php }} with ${{ matrix.dependencies }} Dependencies
@@ -22,11 +25,16 @@ jobs:
     continue-on-error: ${{ matrix.php == matrix.dev || matrix.dependencies == 'lowest' }}
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
+        with:
+          egress-policy: audit
+
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
       - name: Setup PHP ${{ matrix.php }}
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@72ae4ccbe57f82bbe08411e84e2130bd4ba1c10f # v2
         with:
           php-version: ${{ matrix.php }}
           ini-values: assert.exception=1, zend.assertions=1, error_reporting=-1, log_errors_max_len=0, display_errors=On
@@ -45,7 +53,7 @@ jobs:
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ matrix.dependencies }}-${{ hashFiles('**/composer.lock') }}
